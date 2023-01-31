@@ -13,6 +13,7 @@ setup(name='GenomicusTools',
           'utils': 'src/utils',
       },
       scripts=[
+          'src/convert.geneTrees.NHX-phylTree.py',
           'src/createTable.BlocksStats.py',
           'src/createTable.CNE-CNEitems.py',
           'src/createTable.Gene-Search.py',
