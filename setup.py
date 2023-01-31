@@ -7,7 +7,7 @@ setup(name='GenomicusTools',
       author='DYOGEN lab',
       author_email='agora@bio.ens.psl.eu',
       url='https://github.com/DyogenIBENS/Agora/',
-      packages=['genomicus_utils', 'utils'],
+      packages=['src', 'utils'],
       package_dir= {
           'agora': 'src/',
           'utils': 'src/utils',
