@@ -20,6 +20,6 @@ setup(name='GenomicusTools',
           'src/createTable.Species_new.py',
           'src/createTable.SpeciesTree.py',
           'src/createTable.Synteny.py',
-          './createTable.Tree-Orthologs.py',
+          'src/createTable.Tree-Orthologs.py',
       ]
      )
