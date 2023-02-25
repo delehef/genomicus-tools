@@ -2,7 +2,7 @@
 from distutils.core import setup
 
 setup(name='GenomicusTools',
-      version='1.0.0',
+      version='1.1.0',
       description='Tools to create Genomicus databases',
       author='DYOGEN lab',
       author_email='agora@bio.ens.psl.eu',

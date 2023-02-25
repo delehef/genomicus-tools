@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# LibsDyogen version 1.0 (6/11/2015) -- modified for AGORA v3.0
-# python v2.7 at least is needed
-# Copyright © 2006-2021 IBENS/Dyogen, 2020-2021 EMBL-European Bioinformatics Institute, 2021 Genome Research Ltd : Matthieu MUFFATO, Joseph LUCAS and Hugues ROEST CROLLIUS
+# LibsDyogen version 1.0 (6/11/2015) -- modified for AGORA v3.1
+# python 3.5 at least is needed
+# Copyright © 2006-2022 IBENS/Dyogen, 2020-2021 EMBL-European Bioinformatics Institute, 2021-2022 Genome Research Ltd : Matthieu MUFFATO, Joseph LUCAS and Hugues ROEST CROLLIUS
 # mail : agora@bio.ens.psl.eu
 # Licences GLP v3 and CeCILL v2
 
@@ -12,9 +12,12 @@ import itertools
 import collections
 
 from . import myFile
+from . import newick
 
 SYMBOL6X = '.'
 SYMBOL2X = '*'
+# global counter
+nodeIndex = 0
 
 GeneSpeciesPosition = collections.namedtuple("GeneSpeciesPosition", ['species', 'chromosome', 'index'])
 
@@ -275,57 +278,27 @@ class PhylogeneticTree:
                 x += 1
             return readStr(x-self.pos)
 
-        # read the tree in the form of text informations
         def readTree():
-            keepWhile(' ')
+            def recParseTree(n):
+                nodeName = n.name
+                if nodeName:
+                    if nodeName[0] == SYMBOL6X:
+                        nodeName = nodeName[1:]
+                        self.lstEsp6X.add(nodeName)
+                    elif nodeName[0] == SYMBOL2X:
+                        nodeName = nodeName[1:]
+                        self.lstEsp2X.add(nodeName)
+                    else:
+                        self.lstEspFull.add(nodeName)
 
-            children = []
-            if s[self.pos] == '(':
-                # '(' the first time, then some ',' untill the final ')'
-                while readStr(1) != ')':
-                    children.append(readTree())
-                    keepWhile(' ')
-                keepWhile(' ')
+                children = [recParseTree(c) for c in n.descendants]
+                elt = (children, n.name)
+                return (elt, n.length, n.properties)
 
-            nodeName = keepUntil("),:;[ ")
-            #print("youhou",nodeName, file=sys.stderr)
-            #print(nodeName[0], file=sys.stderr)
-            if nodeName[0] == SYMBOL6X:
-                nodeName = nodeName[1:]
-                self.lstEsp6X.add(nodeName)
-            elif nodeName[0] == SYMBOL2X:
-                nodeName = nodeName[1:]
-                self.lstEsp2X.add(nodeName)
-            else:
-                self.lstEspFull.add(nodeName)
-            elt = (children, nodeName)
-
-            keepWhile(' ')
-
-            # possibly a non-null branch length
-            if s[self.pos] == ':':
-                # ":"
-                readStr(1)
-                length = float(keepWhile("0123456789.eE-"))
-            else:
-                length = 0
-
-            keepWhile(' ')
-
-            # possibly informations between brackets
-            if s[self.pos] == '[':
-                # "["
-                readStr(1)
-                info = keepUntil("]")
-                info = dict(x.split("=") for x in info.split(":") if "=" in x)
-                # "]"
-                readStr(1)
-            else:
-                info = {}
-
-            keepWhile(' ')
-
-            return (elt, length, info)
+            trees = newick.loads(s)
+            if len(trees) > 1:
+                raise Exception(f"Expected 1 tree in file, found {len(trees)}")
+            return recParseTree(trees[0])
 
         def calcAges(data):
             ((children, name), _, _) = data
@@ -345,12 +318,10 @@ class PhylogeneticTree:
         # fill the variables of a GenericTree
         def storeTree(data):
             ((children, name), length, info) = data
-            #FIXME for rare cases
             if (name == '') or (name in self.officialName):
-                #FIXME ??
-                name = "NAME_%d" % self.pos
-                #FIXME ??
-                self.pos += 1
+                global nodeIndex
+                name = "NAME_%d" % nodeIndex
+                nodeIndex += 1
             self.officialName[name] = name
             self.info[name] = info
 
@@ -369,7 +340,6 @@ class PhylogeneticTree:
         self.lstEsp6X = set()
         self.lstEspFull = set()
         data = readTree()
-        self.pos = 0
         self.info = {}
         storeTree(data)
         self.ages = self.newCommonNamesMapperInstance()
